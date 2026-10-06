@@ -1,0 +1,257 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --cyan: #57e2ff;
+  --magenta: #c06bff;
+  --text-dark: #333333;
+  --text-muted: #9b9b9b;
+  --line: #e6e6e6;
+  --card: #ffffff;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  color: var(--text-dark);
+  background: linear-gradient(135deg, var(--magenta) 0%, #8b7dff 42%, var(--cyan) 100%);
+  overflow-x: hidden;
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  overflow: hidden;
+}
+
+.page::before,
+.page::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.02)
+  );
+}
+
+.page::before {
+  width: 55vmax;
+  height: 55vmax;
+  top: -18%;
+  right: -12%;
+  transform: rotate(28deg);
+  clip-path: polygon(18% 0, 100% 12%, 88% 100%, 0 78%);
+}
+
+.page::after {
+  width: 48vmax;
+  height: 48vmax;
+  bottom: -22%;
+  left: -16%;
+  transform: rotate(-18deg);
+  clip-path: polygon(0 18%, 78% 0, 100% 72%, 22% 100%);
+  opacity: 0.85;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 48px 40px 36px;
+  box-shadow: 0 18px 50px rgba(40, 20, 80, 0.22);
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-bottom: 36px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  margin-bottom: 22px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.input-wrap:focus-within {
+  border-bottom-color: #b07dff;
+}
+
+.input-wrap i {
+  color: #bdbdbd;
+  font-size: 15px;
+  width: 18px;
+  text-align: center;
+}
+
+.input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.input-wrap input::placeholder {
+  color: #c4c4c4;
+}
+
+.forgot {
+  align-self: flex-end;
+  margin-top: -6px;
+  margin-bottom: 28px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot:hover {
+  color: #777;
+}
+
+.login-btn {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 14px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--cyan) 0%, #8b7dff 50%, var(--magenta) 100%);
+  box-shadow: 0 10px 24px rgba(140, 100, 255, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.login-btn:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 12px 28px rgba(140, 100, 255, 0.42);
+}
+
+.login-btn:active {
+  transform: translateY(1px);
+}
+
+.divider {
+  text-align: center;
+  margin-top: 42px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.socials {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.social {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.social:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.social.facebook {
+  background: #3b5998;
+}
+
+.social.twitter {
+  background: #1da1f2;
+}
+
+.social.google {
+  background: #ea4335;
+}
+
+.signup {
+  margin-top: 54px;
+  text-align: center;
+}
+
+.signup p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.signup a {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.signup a:hover {
+  color: #555;
+}
+
+@media (max-width: 420px) {
+  .login-card {
+    padding: 40px 28px 32px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}
