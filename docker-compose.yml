@@ -1,0 +1,43 @@
+# docker compose up --build -d
+#   API: http://localhost:8000  (docs at /docs, health at /health)
+#   UI:  http://localhost:8501
+# The Groq key is read from .env by the API container only; the UI calls the API.
+name: restaurant-recommender
+
+services:
+  api:
+    build: .
+    image: restaurant-recommender:1.0.0
+    command: ["api"]
+    env_file: .env
+    environment:
+      DATA_PATH: /app/data/processed/restaurants.parquet
+      LOG_FORMAT: json
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  ui:
+    build: .
+    image: restaurant-recommender:1.0.0
+    command: ["ui"]
+    environment:
+      RECOMMENDER_API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped

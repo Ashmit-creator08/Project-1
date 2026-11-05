@@ -1,0 +1,15 @@
+[server]
+headless = true
+enableXsrfProtection = true
+maxUploadSize = 1
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Hide the developer menu (Deploy / Rerun settings) in production.
+toolbarMode = "minimal"
+showErrorDetails = false
+
+[theme]
+primaryColor = "#C2410C"
