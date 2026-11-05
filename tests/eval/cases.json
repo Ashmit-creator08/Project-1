@@ -1,0 +1,138 @@
+[
+  {
+    "id": "EV-01",
+    "description": "Bangalore + Italian + medium + rating >= 3.5",
+    "prefs": {"location": "Bangalore", "budget": "medium", "cuisine": "Italian", "min_rating": 3.5, "additional_preferences": "family-friendly", "top_n": 5},
+    "expect": {"non_empty": true, "llm_called": true},
+    "tags": ["happy_path", "demo", "judge"]
+  },
+  {
+    "id": "EV-01b",
+    "description": "Indiranagar + Italian + medium + rating >= 3.5",
+    "prefs": {"location": "Indiranagar", "budget": "medium", "cuisine": "Italian", "min_rating": 3.5, "top_n": 5},
+    "expect": {"non_empty": true, "llm_called": true},
+    "tags": ["happy_path", "demo"]
+  },
+  {
+    "id": "EV-02",
+    "description": "Bangalore + Chinese + low + rating >= 3.0 (the dataset has no Delhi rows; see EV-02b)",
+    "prefs": {"location": "Bangalore", "budget": "low", "cuisine": "Chinese", "min_rating": 3.0, "top_n": 5},
+    "expect": {"non_empty": true, "llm_called": true},
+    "tags": ["happy_path", "demo", "judge"]
+  },
+  {
+    "id": "EV-02b",
+    "description": "Delhi is outside the Bangalore-only dataset -> empty, no LLM call",
+    "prefs": {"location": "Delhi", "budget": "low", "cuisine": "Chinese", "min_rating": 3.0},
+    "expect": {"non_empty": false, "llm_called": false},
+    "tags": ["empty"]
+  },
+  {
+    "id": "EV-03",
+    "description": "Location Atlantis -> empty, no LLM call",
+    "prefs": {"location": "Atlantis", "budget": "medium", "cuisine": "Italian"},
+    "expect": {"non_empty": false, "llm_called": false},
+    "tags": ["empty"]
+  },
+  {
+    "id": "EV-04",
+    "description": "Sparse: Indiranagar Italian with rating >= 4.9",
+    "prefs": {"location": "Indiranagar", "cuisine": "Italian", "min_rating": 4.9, "top_n": 5},
+    "expect": {},
+    "tags": ["sparse"]
+  },
+  {
+    "id": "EV-05",
+    "description": "Broad: all of Bangalore -> shortlist capped at MAX_CANDIDATES",
+    "prefs": {"location": "Bangalore", "top_n": 5},
+    "expect": {"non_empty": true, "capped": true},
+    "tags": ["cap"]
+  },
+  {
+    "id": "EV-06",
+    "description": "top_n = 5 but only 2 filter matches: exactly 2 items, no padding",
+    "prefs": {"location": "Indiranagar", "cuisine": "Mexican", "budget": "medium", "min_rating": 4.0, "top_n": 5},
+    "expect": {"non_empty": true, "fewer_than_top_n": true, "count": 2},
+    "tags": ["cardinality"]
+  },
+  {
+    "id": "EV-07",
+    "description": "Soft-only notes for attributes the data does not have",
+    "prefs": {"location": "Koramangala", "cuisine": "Cafe", "additional_preferences": "romantic rooftop", "top_n": 5},
+    "expect": {"non_empty": true},
+    "tags": ["soft_prefs", "judge"]
+  },
+  {
+    "id": "EV-08",
+    "description": "Mixed case / padded strings give the same result as EV-01",
+    "prefs": {"location": "  bangalore ", "budget": "Medium", "cuisine": "italian", "min_rating": 3.5, "top_n": 5},
+    "expect": {"non_empty": true, "same_as": "EV-01"},
+    "tags": ["normalization"]
+  },
+  {
+    "id": "EV-09",
+    "description": "Invalid budget / rating / top_n are rejected",
+    "prefs": {"location": "Bangalore", "budget": "cheap", "min_rating": 7, "top_n": 0},
+    "expect": {"invalid": true},
+    "tags": ["validation"]
+  },
+  {
+    "id": "EV-10",
+    "description": "Mocked LLM timeout -> rating fallback",
+    "prefs": {"location": "Bangalore", "budget": "medium", "cuisine": "Italian", "min_rating": 3.5, "top_n": 5},
+    "inject": "llm_failure",
+    "expect": {"non_empty": true, "fallback": true},
+    "tags": ["fallback"]
+  },
+  {
+    "id": "EV-10b",
+    "description": "Mocked invalid JSON twice -> rating fallback",
+    "prefs": {"location": "Bangalore", "budget": "medium", "cuisine": "Italian", "min_rating": 3.5, "top_n": 5},
+    "inject": "invalid_json",
+    "expect": {"non_empty": true, "fallback": true},
+    "tags": ["fallback"]
+  },
+  {
+    "id": "EV-11",
+    "description": "Mocked hallucinated ids -> dropped and backfilled",
+    "prefs": {"location": "Bangalore", "budget": "medium", "cuisine": "Italian", "min_rating": 3.5, "top_n": 5},
+    "inject": "hallucinated",
+    "expect": {"non_empty": true, "fallback": false},
+    "tags": ["hallucination"]
+  },
+  {
+    "id": "EV-12",
+    "description": "Contradictory soft vs hard: 'very cheap' + budget high",
+    "prefs": {"location": "Bangalore", "budget": "high", "additional_preferences": "very cheap", "top_n": 5},
+    "expect": {"non_empty": true},
+    "tags": ["conflict"]
+  },
+  {
+    "id": "EV-13",
+    "description": "Phase 4: misspelled locality 'Koramangla' resolves to Koramangala",
+    "prefs": {"location": "Koramangla", "cuisine": "North Indian", "min_rating": 4.0, "top_n": 5},
+    "expect": {"non_empty": true, "notes_contain": "closest match"},
+    "tags": ["fuzzy", "phase4"]
+  },
+  {
+    "id": "EV-14-ref",
+    "description": "Reference for EV-14 with canonical spelling",
+    "prefs": {"location": "Indiranagar", "cuisine": "Italian", "budget": "medium", "top_n": 5},
+    "expect": {"non_empty": true},
+    "tags": ["phase4"]
+  },
+  {
+    "id": "EV-14",
+    "description": "Phase 4: spaced locality + misspelled cuisine ('Indira Nagar', 'Itallian') = EV-14-ref",
+    "prefs": {"location": "Indira Nagar", "cuisine": "Itallian", "budget": "medium", "top_n": 5},
+    "expect": {"non_empty": true, "notes_contain": "Italian", "same_as": "EV-14-ref"},
+    "tags": ["fuzzy", "phase4"]
+  },
+  {
+    "id": "EV-15",
+    "description": "Phase 4: dish synonym 'pizza' also matches Italian; 'HSR Layout' = HSR",
+    "prefs": {"location": "HSR Layout", "cuisine": "pizza", "min_rating": 3.5, "top_n": 5},
+    "expect": {"non_empty": true, "notes_contain": "also matches"},
+    "tags": ["synonym", "phase4"]
+  }
+]

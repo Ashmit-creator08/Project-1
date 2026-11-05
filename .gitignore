@@ -1,0 +1,36 @@
+# Secrets
+.env
+.env.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.envrc
+
+# Data artifacts (regenerate via ingest)
+data/processed/*.parquet
+data/processed/*.csv
+!data/processed/.gitkeep
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Tests / coverage / eval outputs
+.pytest_cache/
+.coverage
+htmlcov/
+evals/scorecard-*.md
+
+# Hugging Face / datasets cache (local)
+.cache/
