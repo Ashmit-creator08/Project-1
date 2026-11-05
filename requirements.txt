@@ -1,21 +1,3 @@
-# API
-fastapi>=0.115.0
-uvicorn[standard]>=0.32.0
-pydantic>=2.9.0
-pydantic-settings>=2.6.0
-
-# Data
-pandas>=2.2.0
-datasets>=3.0.0
-pyarrow>=17.0.0
-
-# LLM
-httpx>=0.27.0
-openai>=1.54.0
-python-dotenv>=1.0.0
-
-# UI (Phase 3)
-streamlit>=1.39.0
-
-# Tests
-pytest>=8.3.0
+# Pinned, tested dependency set. Streamlit Community Cloud installs this file;
+# the Docker image and CI install requirements.lock directly.
+-r requirements.lock

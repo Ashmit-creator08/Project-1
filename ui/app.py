@@ -5,8 +5,12 @@ Run from the repo root::
     streamlit run ui/app.py
 
 By default the UI calls the recommendation service in-process (one process,
-simplest for demos). Set ``RECOMMENDER_API_URL=http://localhost:8000`` to call
-the FastAPI service instead.
+simplest for demos and for Streamlit Community Cloud). Set
+``RECOMMENDER_API_URL=http://localhost:8000`` to call the FastAPI service instead.
+
+Environment:
+    AUTO_INGEST=1                 build the dataset on first start if it is missing (cloud hosts)
+    UI_RATE_LIMIT_PER_MINUTE=20   searches per minute per client (0 = off); protects the Groq quota
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -25,14 +30,18 @@ import httpx  # noqa: E402
 import streamlit as st  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 
+from restaurant_recommender.api.ratelimit import TokenBucketLimiter  # noqa: E402
 from restaurant_recommender.config import get_settings  # noqa: E402
 from restaurant_recommender.data.budget import LOW_MAX, MEDIUM_MAX  # noqa: E402
+from restaurant_recommender.data.ingest import IngestError, ingest  # noqa: E402
 from restaurant_recommender.data.store import DataUnavailableError, RestaurantStore  # noqa: E402
 from restaurant_recommender.llm.client import build_client  # noqa: E402
 from restaurant_recommender.models.schemas import PreferenceRequest  # noqa: E402
 from restaurant_recommender.services.recommend import RecommendationService  # noqa: E402
 
 API_URL = os.getenv("RECOMMENDER_API_URL", "").strip().rstrip("/")
+AUTO_INGEST = os.getenv("AUTO_INGEST", "1").strip().lower() not in {"0", "false", "no", "off"}
+UI_RATE_LIMIT_PER_MINUTE = int(os.getenv("UI_RATE_LIMIT_PER_MINUTE", "20") or 0)
 OPTION_LIMIT = 300
 BUDGET_LABELS = {
     "any": "Any",
@@ -54,6 +63,42 @@ def md(text: str) -> str:
 
 
 # --------------------------------------------------------------------------- backend access
+
+
+@st.cache_resource
+def _ingest_lock() -> threading.Lock:
+    return threading.Lock()
+
+
+def ensure_dataset() -> None:
+    """Cloud hosts start without the (gitignored) dataset: build it once, on first start."""
+    if API_URL or not AUTO_INGEST:
+        return
+    path = get_settings().data_path
+    if path.exists():
+        return
+    with _ingest_lock():  # one session builds it; concurrent first visitors wait
+        if path.exists():
+            return
+        with st.spinner("First start: building the restaurant dataset from Hugging Face (1–3 minutes)…", show_time=True):
+            try:
+                ingest(out_path=path)
+            except IngestError as exc:
+                st.error(f"Could not build the restaurant dataset: {exc}")
+                st.stop()
+
+
+@st.cache_resource
+def get_limiter() -> TokenBucketLimiter:
+    return TokenBucketLimiter(UI_RATE_LIMIT_PER_MINUTE)
+
+
+def client_key() -> str:
+    """Viewer's IP when the host exposes it; otherwise one shared bucket (an app-wide limit)."""
+    try:
+        return st.context.ip_address or "shared"
+    except Exception:  # older Streamlit / no request context
+        return "shared"
 
 
 @st.cache_resource(show_spinner="Loading restaurants…")
@@ -167,6 +212,7 @@ st.set_page_config(page_title="Restaurant Recommender", page_icon=":material/res
 st.title("Where should we eat?")
 st.caption("Real Zomato listings for Bangalore, filtered by your preferences and ranked by AI.")
 
+ensure_dataset()
 try:
     options = get_options()
     status = backend_status()
@@ -224,15 +270,21 @@ if submitted:
         "additional_preferences": additional or "",
         "top_n": top_n,
     }
-    # A new submit interrupts the previous run, so only the latest result is shown (UI-06, IN-14).
-    with st.spinner("Finding and ranking restaurants…", show_time=True):
-        try:
-            st.session_state["result"] = run_query(payload)
-            st.session_state["error"] = None
-        except UIError as exc:
-            st.session_state["result"], st.session_state["error"] = None, str(exc)
-        except DataUnavailableError as exc:
-            st.session_state["result"], st.session_state["error"] = None, str(exc)
+    # The API has its own per-client limiter; in-process mode limits here.
+    allowed, retry_after = (True, 0) if API_URL else get_limiter().check(client_key())
+    if not allowed:
+        st.session_state["result"] = None
+        st.session_state["error"] = f"Too many searches right now. Please try again in {retry_after} seconds."
+    else:
+        # A new submit interrupts the previous run, so only the latest result is shown (UI-06, IN-14).
+        with st.spinner("Finding and ranking restaurants…", show_time=True):
+            try:
+                st.session_state["result"] = run_query(payload)
+                st.session_state["error"] = None
+            except UIError as exc:
+                st.session_state["result"], st.session_state["error"] = None, str(exc)
+            except DataUnavailableError as exc:
+                st.session_state["result"], st.session_state["error"] = None, str(exc)
 
 if st.session_state.get("error"):
     st.error(st.session_state["error"])
